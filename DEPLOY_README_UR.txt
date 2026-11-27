@@ -1,33 +1,38 @@
-OBSESSKIN - NETLIFY + SUPABASE PROJECT
+OBSESSKIN - NETLIFY + SUPABASE (Roman Urdu guide)
 
-IMPORTANT:
-- This project includes index.html and server-side Netlify Functions.
-- Do not paste SUPABASE_SERVICE_ROLE_KEY into HTML, JavaScript, this ZIP, or chat.
-- Add these variables in Netlify > Project configuration > Environment variables:
-  SUPABASE_URL
-  SUPABASE_PUBLISHABLE_KEY
-  SUPABASE_SERVICE_ROLE_KEY
-- SUPABASE_SERVICE_ROLE_KEY must be a Supabase Secret/service_role key and is used only by Netlify Functions.
-- SUPABASE_PUBLISHABLE_KEY is public and is served to the browser by /.netlify/functions/supabase-config.
-- After adding/updating environment variables, create a new deploy.
+1) Supabase SQL setup
+- Supabase Dashboard > SQL Editor kholo.
+- SUPABASE_LIVE_SETUP.sql file ka poora code paste karke Run karo.
+- Agar duplicate section ka error aaye to ruk jao. Pehle duplicates check/share karo; data delete mat karna.
 
-ADMIN LOGIN SETUP:
-1. Create an email/password user in Supabase Authentication > Users.
-2. Copy that user's UUID.
-3. Add the UUID to public.admin_users using the SQL editor:
-   insert into public.admin_users(user_id) values ('AUTH-USER-UUID') on conflict do nothing;
+2) Netlify environment variables
+Netlify > Site configuration / Project configuration > Environment variables mein ye 3 values set hon:
+- SUPABASE_URL
+- SUPABASE_PUBLISHABLE_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+Service role key sirf Netlify environment variables mein rahe. Isay HTML, GitHub ya chat mein kabhi paste na karo.
 
-DEPLOYMENT LIMITATION:
-A plain static drag-and-drop deploy in Netlify does not reliably build/deploy the functions in this project.
-The functions must be deployed using a Netlify build/deploy workflow that processes netlify/functions (for example Netlify CLI or a connected Git provider).
-Do not treat a successful static upload as proof that Supabase backend functions are live.
+3) Deployment
+Is project mein Netlify Functions hain. Sirf static drag-and-drop deploy se functions deploy nahi hotay.
+Git provider se repository connect karke build/deploy karo, ya Netlify CLI ka supported workflow use karo.
+Deploy ke baad functions ke endpoints test karo.
 
-FEATURE NOTES:
-This package contains order saving, review submission/approval, product/order admin functions.
-It does not include email notifications or payment screenshot uploads.
+4) Admin access
+- Supabase Authentication > Users mein admin email/password user hona chahiye.
+- Us user ki UUID public.admin_users table mein honi chahiye.
+- Existing admin login design/code ko change na karo.
 
-ADMIN DASHBOARD SYNC UPDATE (2026-11-27):
-- After a verified Supabase admin login, dashboard settings/products/pages/reviews/media/SEO keys are loaded from public.admin_content.
-- Changes to the mapped local admin keys are automatically synchronized to admin_content through the secured Netlify admin-manage function.
-- This does not replace the live Orders/Reviews manager database routes, nor upload local Base64 media to Supabase Storage. Large image/video assets should be moved to Storage before treating the Media Library as production-cloud storage.
-- Deploy the full project with Netlify build/functions (Git connected or Netlify CLI), not static drag-and-drop.
+5) Is package mein is update ke andar
+- Review APIs ab public.reviews.review_text column use karti hain (reviews column nahi).
+- Admin content upsert ke liye admin_content.section unique index SQL diya gaya hai.
+- Existing server-side admin authorization ko preserve kiya gaya hai.
+
+IMPORTANT - honest feature status
+Yeh ZIP review-column fix aur Supabase SQL setup provide karti hai. Is se yeh guarantee nahi hoti ke index.html ke har admin tab ka har control cloud-synced hai. Current index.html mein ab bhi kai features localStorage use karte hain (misal: kuch product controls, media, categories, email settings, aur delivery settings). Media files ko Storage mein upload karne ka complete workflow bhi is package mein shamil nahi. In tabs ko alag alag integrate aur test karna hoga before production-live claim.
+
+Storage notes
+- product-images bucket public ho sakta hai sirf public product media ke liye.
+- payment-proofs bucket private rakho.
+- Private payment proof upload/read policies ko verify kiye baghair public mat karo.
+
+Never put SUPABASE_SERVICE_ROLE_KEY in browser code, HTML, GitHub, or chat.

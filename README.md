@@ -1,49 +1,23 @@
-# OBSESSKIN — Netlify + Supabase
+# OBSESSKIN Netlify + Supabase
 
-This repository is arranged for GitHub-connected Netlify deployment.
+This project includes the storefront (`index.html`) and Netlify Functions under `netlify/functions`.
 
-## Repository structure
+## Environment variables
+Set these in Netlify environment variables:
+- `SUPABASE_URL`
+- `SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-```text
-OBSESSKIN_GITHUB_READY/
-├── index.html
-├── netlify.toml
-├── .gitignore
-├── .env.example
-├── README.md
-├── DEPLOY_README_UR.txt
-└── netlify/
-    └── functions/
-        ├── _supabase.js
-        ├── supabase-config.js
-        ├── admin-manage.js
-        ├── submit-review.js
-        └── create-order.js
-```
+**Never expose `SUPABASE_SERVICE_ROLE_KEY` in browser code, HTML, GitHub, or chat.**
 
-## Deploy through GitHub
+## Supabase SQL
+Run `SUPABASE_LIVE_SETUP.sql` in the Supabase SQL Editor. It creates the unique index needed by `admin_content?on_conflict=section` and useful read indexes. It stops safely if duplicate `admin_content.section` values exist; inspect and resolve those without deleting saved content.
 
-1. Create a new GitHub repository.
-2. Upload the **contents of this folder** to the repository root (do not upload an extra nested folder).
-3. In Netlify, choose **Add new site → Import an existing project** and connect that GitHub repository.
-4. Keep the build settings compatible with `netlify.toml`:
-   - Build command: leave empty
-   - Publish directory: `.`
-   - Functions directory: `netlify/functions`
-5. Add these environment variables in Netlify site configuration:
-   - `SUPABASE_URL`
-   - `SUPABASE_PUBLISHABLE_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-6. Trigger a new deploy after setting the variables.
+## Admin access
+Create/use the admin email/password user in Supabase Auth, then add that Auth user's UUID to `public.admin_users`. Existing server-side authorization checks the authenticated user against this allow-list.
 
-## Security
+## Deployment
+This project uses Netlify Functions. Deploy through a connected Git provider or Netlify CLI/build workflow that processes `netlify/functions`; a static drag-and-drop upload alone does not deploy the functions reliably.
 
-- Never put `SUPABASE_SERVICE_ROLE_KEY` in `index.html`, browser JavaScript, GitHub, or a public file.
-- Set the service-role key only in Netlify environment variables.
-- `.env` files are ignored by Git.
-
-## Important: backend setup is still required
-
-This ZIP contains the frontend and Netlify function files, but it does **not** contain the Supabase SQL/database schema. Before live checkout, reviews, and admin management can work, the matching Supabase tables, columns, relationships, and admin user record must exist. Do not treat a successful Netlify deploy as proof that the database integration is working.
-
-The included functions cover order creation, review submission/listing, and admin retrieval/updates. The package notes that email notifications and payment screenshot uploads are not included.
+## Scope and limitations
+The review functions use the existing `public.reviews.review_text` column. The dashboard's `admin_content` sync covers the keys already mapped in `index.html`, but other dashboard controls still use browser `localStorage` (including some product controls, media, categories, delivery settings, and email settings). This package does not implement a complete Storage upload workflow for media or payment proofs, and it does not provide email notifications. Test each admin area before treating it as fully cloud-synced.
