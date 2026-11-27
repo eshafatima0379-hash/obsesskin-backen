@@ -1221,6 +1221,9 @@ input,select,textarea{font-weight:500}
   document.querySelectorAll('.obs-video-card[data-admin-media]').forEach(x=>x.remove());
   const grid=document.querySelector('.obs-video-grid');if(grid)media.forEach(x=>{const card=document.createElement('article');card.className='obs-video-card';card.dataset.adminMedia='1';card.innerHTML=`<div class="obs-video-frame">${x.type==='video'?`<video controls src="${x.url}"></video>`:`<img src="${x.url}" style="width:100%;height:100%;object-fit:cover" alt="${esc(x.title)}">`}</div><div class="obs-video-meta"><h3>${esc(x.title)}</h3><p>Added from Admin</p></div>`;grid.appendChild(card)});
  }
+ window.OBSESSKIN_ADMIN_APPLY_REMOTE=function(){
+   try{extra=read(EXTRA,extra);extra.menuLinks=extra.menuLinks||{};extra.menu=Array.isArray(extra.menu)?extra.menu:[];reviews=read(REV,[]);media=read(MEDIA,[]);adminPages=read('obs_admin_pages_v1',[]);if(!Array.isArray(adminPages))adminPages=[];applySettings();}catch(e){console.warn('Admin remote content apply:',e.message)}
+ };
  function openLogin(){
   const old=document.getElementById('obsAdminLoginNew');if(old)old.remove();
   const box=document.createElement('div');box.id='obsAdminLoginNew';box.className='obs-fix-receipt';
@@ -1248,8 +1251,10 @@ input,select,textarea{font-weight:500}
         throw new Error('This Supabase account is not listed as an admin. Check admin_users and its own-row SELECT policy.');
       }
       window.OBSESSKIN_SUPABASE_ADMIN_SESSION={accessToken:auth.access_token,refreshToken:auth.refresh_token,user:auth.user,expiresAt:Date.now()+(Number(auth.expires_in)||3600)*1000,base,publishableKey:cfg.publishableKey};
+      if(window.OBSESSKIN_ADMIN_SYNC_READY) await window.OBSESSKIN_ADMIN_SYNC_READY();
       close();draw();
       const root=document.getElementById('obsAdminComplete');
+      if(root&&window.OBSESSKIN_ADMIN_SYNCED){const syncStatus=root.querySelector('.oa-head .oa-muted');if(syncStatus)syncStatus.textContent='Supabase connected · admin changes auto-sync';}
       if(root){const status=root.querySelector('.oa-head .oa-muted');if(status)status.textContent='Signed in with Supabase · '+(auth.user.email||email);const closeBtn=root.querySelector('#oaClose');if(closeBtn)closeBtn.textContent='Sign out ×';}
     }catch(e){err.textContent=e.message||'Could not sign in. Please try again.';}
     finally{btn.disabled=false;btn.textContent='Login to Dashboard';}
@@ -1551,6 +1556,27 @@ input,select,textarea{font-weight:500}
  const original=window.renderProducts; if(typeof original==='function'&&!original.__obsLiveWrapped){window.renderProducts=function(...args){const out=original.apply(this,args);document.querySelectorAll('#products .product').forEach(card=>{if(card.querySelector('.obs-live-eta'))return;const name=card.querySelector('h3')?.textContent;if(name){const html=dateLabel(name);if(html)card.querySelector('h3')?.insertAdjacentHTML('afterend',html)}});return out};window.renderProducts.__obsLiveWrapped=true}
  const observer=new MutationObserver(()=>{const root=document.getElementById('obsAdminComplete');if(root&&window.OBSESSKIN_SUPABASE_ADMIN_SESSION)addManagerButton(root)});observer.observe(document.documentElement,{childList:true,subtree:true});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',publicProducts);else publicProducts();
+})();
+</script>
+
+
+<script id="obsesskin-admin-content-sync">
+(()=>{
+ const SECTION_BY_KEY={
+  'obs_admin_products_v1':'products','obs_admin_extra_v1':'settings','obs_admin_pages_v1':'pages',
+  'obs_admin_media_v1':'media','obs_seo_settings_v1':'seo','obsfix_settings':'settings',
+  'obs_admin_categories_v1':'settings','obs_email_security_settings_v1':'settings',
+  'obs_product_controls_v1':'settings','obsfix_added_products':'products'
+ };
+ const sectionFor=k=>SECTION_BY_KEY[k]||(k==='obs_customer_reviews_v1'||k==='obsfix_reviews_v1'||/^obsesskin_reviews_/.test(k)?'reviews':null);
+ const sess=()=>window.OBSESSKIN_SUPABASE_ADMIN_SESSION;
+ const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem;
+ let hydrated=false,hydrating=false,cache={},queue={},timers={};
+ async function request(method,body){const s=sess();if(!s?.accessToken)throw new Error('Admin session required');const url='/.netlify/functions/admin-manage'+(method==='GET'?'?kind=admin-content':'');const r=await fetch(url,{method,headers:{Authorization:'Bearer '+s.accessToken,'Content-Type':'application/json',Accept:'application/json'},...(body?{body:JSON.stringify(body)}:{})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Admin content sync failed');return d.data}
+ function enqueue(section,key,value,deleted=false){if(!section||!sess()?.accessToken||hydrating)return;cache[section]=cache[section]||{};if(deleted)delete cache[section][key];else cache[section][key]=value;queue[section]=queue[section]||{section,updates:{}};queue[section].updates[key]={value,deleted};clearTimeout(timers[section]);timers[section]=setTimeout(async()=>{const job=queue[section];delete queue[section];try{await request('PATCH',{kind:'admin-content',section,updates:job.updates});window.OBSESSKIN_ADMIN_SYNC_ERROR='';const root=document.getElementById('obsAdminComplete');const status=root?.querySelector('.oa-head .oa-muted');if(status)status.textContent='Supabase connected · last change synced';}catch(e){console.warn('OBSESSKIN admin save failed:',e.message);window.OBSESSKIN_ADMIN_SYNC_ERROR=e.message;const root=document.getElementById('obsAdminComplete');const status=root?.querySelector('.oa-head .oa-muted');if(status)status.textContent='Sync error: '+e.message;}},400)}
+ window.OBSESSKIN_ADMIN_SYNC_READY=async()=>{if(hydrated)return;hydrating=true;try{const rows=await request('GET');(rows||[]).forEach(row=>{if(!row||!row.section)return;const obj=row.content&&typeof row.content==='object'&&!Array.isArray(row.content)?row.content:{};cache[row.section]=obj;Object.entries(obj).forEach(([k,v])=>nativeSet.call(localStorage,k,JSON.stringify(v)));});hydrated=true;window.OBSESSKIN_ADMIN_SYNCED=true;if(window.OBSESSKIN_ADMIN_APPLY_REMOTE)window.OBSESSKIN_ADMIN_APPLY_REMOTE();}catch(e){window.OBSESSKIN_ADMIN_SYNC_ERROR=e.message;console.warn('Admin content hydration skipped:',e.message)}finally{hydrating=false}};
+ Storage.prototype.setItem=function(key,value){nativeSet.call(this,key,value);if(this!==localStorage)return;const section=sectionFor(String(key));if(!section||hydrating||!sess()?.accessToken)return;let parsed;try{parsed=JSON.parse(value)}catch{parsed=value}enqueue(section,String(key),parsed,false)};
+ Storage.prototype.removeItem=function(key){nativeRemove.call(this,key);if(this!==localStorage)return;const section=sectionFor(String(key));if(!section||hydrating||!sess()?.accessToken)return;enqueue(section,String(key),null,true)};
 })();
 </script>
 

@@ -25,3 +25,9 @@ Do not treat a successful static upload as proof that Supabase backend functions
 FEATURE NOTES:
 This package contains order saving, review submission/approval, product/order admin functions.
 It does not include email notifications or payment screenshot uploads.
+
+ADMIN DASHBOARD SYNC UPDATE (2026-11-27):
+- After a verified Supabase admin login, dashboard settings/products/pages/reviews/media/SEO keys are loaded from public.admin_content.
+- Changes to the mapped local admin keys are automatically synchronized to admin_content through the secured Netlify admin-manage function.
+- This does not replace the live Orders/Reviews manager database routes, nor upload local Base64 media to Supabase Storage. Large image/video assets should be moved to Storage before treating the Media Library as production-cloud storage.
+- Deploy the full project with Netlify build/functions (Git connected or Netlify CLI), not static drag-and-drop.
