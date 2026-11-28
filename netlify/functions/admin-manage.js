@@ -7,10 +7,16 @@ exports.handler = async (event) => {
       const kind = event.queryStringParameters?.kind || 'orders'; let r;
       if (kind === 'admin-content') r = await sb('admin_content?select=section,content&order=section.asc');
       else if (kind === 'orders') r = await sb('orders?select=*,order_items(id,order_id,product_id,quantity,price,estimated_delivery_date,product_name_snapshot)&order=created_at.desc');
-      else if (kind === 'reviews') { r = await sb('reviews?select=id,customer_name,review_text,rating,created_at,product_name,is_approved&order=created_at.desc'); }
+      else if (kind === 'reviews') r = await sb('reviews?select=id,customer_name,review_text,rating,created_at,product_name,is_approved&order=created_at.desc');
       else if (kind === 'products') r = await sb('products?select=id,name,description,price,image_url,category_id,is_active,created_at,estimated_delivery_date&order=name.asc');
       else return response(400, { error: 'Unknown manager section.' });
       return response(200, { data: r.data || [] });
+    }
+    if (event.httpMethod === 'DELETE') {
+      const reviewId = String(event.queryStringParameters?.reviewId || '').trim();
+      if (!reviewId) return response(400, { error: 'Review ID is required.' });
+      await sb(`reviews?id=eq.${encodeURIComponent(reviewId)}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+      return response(200, { ok: true });
     }
     if (event.httpMethod === 'PATCH') {
       const b = JSON.parse(event.body || '{}');
