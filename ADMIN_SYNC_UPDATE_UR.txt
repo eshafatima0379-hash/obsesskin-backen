@@ -1,0 +1,136 @@
+
+OBSESSKIN – ADMIN SUPABASE SYNC UPDATE
+======================================
+
+1. IS UPDATE KA MAQSAD
+
+OBSESSKIN website ke existing Admin Panel ko Supabase
+ke saath connect karna hai.
+
+Website ka original design, admin login aur tamam
+existing tabs waise hi rehne chahiye.
+
+Supabase sirf backend ke taur par kaam karega.
+Admin panel mein alag Supabase Manager tab ya popup
+ki zaroorat nahi hai.
+
+2. EXISTING ADMIN TABS
+
+Neeche diye gaye tabs ka data Supabase mein save
+aur sync hona chahiye:
+
+- Overview
+- Website Settings
+- Products & Prices
+- Media Library
+- Reviews
+- Pages
+- SEO
+- Orders & Payments
+- Menu
+- Email & Security
+- Coming Soon
+- Parcel Tracking & Delivery
+
+3. REVIEWS
+
+Customer website par review submit kare to woh
+Admin Panel ke Reviews tab mein aaye.
+
+Admin ke paas ye options hon:
+
+- Approve
+- Reject
+- Delete
+
+4. PRODUCTS & MEDIA
+
+Products aur categories ka data Supabase mein
+save hona chahiye.
+
+Admin product add, edit ya delete kar sake.
+
+Media Library mein images aur videos upload
+karne ka option hona chahiye.
+
+Media uploads product-images bucket mein save honge.
+
+Har media file ka maximum upload size 4 MB hai.
+
+5. ORDERS & PAYMENT PROOFS
+
+Customer ke orders Supabase mein save hon.
+
+Payment screenshot optional ho.
+
+Payment screenshots private payment-proofs
+bucket mein save hon.
+
+Admin order details aur payment proof dekh sake
+aur payment status update kar sake.
+
+6. REQUIRED NETLIFY FUNCTIONS
+
+netlify/functions/ ke andar ye files honi chahiye:
+
+- _supabase.js
+- supabase-config.js
+- admin-manage.js
+- submit-review.js
+- create-order.js
+- upload-media.js
+
+7. NETLIFY ENVIRONMENT VARIABLES
+
+Netlify mein ye environment variables configured
+hone chahiye:
+
+SUPABASE_URL
+SUPABASE_PUBLISHABLE_KEY
+SUPABASE_SERVICE_ROLE_KEY
+
+IMPORTANT:
+Service Role Key ko kabhi index.html ya kisi
+frontend JavaScript file mein expose na karein.
+
+Is key ko GitHub par upload na karein.
+
+8. SUPABASE STORAGE
+
+Required buckets:
+
+product-images
+payment-proofs
+
+product-images: Public bucket.
+payment-proofs: Private bucket.
+
+9. IMPORTANT NOTES
+
+Existing admin login aur password behavior
+change nahi karna.
+
+Existing website design aur admin tabs remove
+ya replace nahi karne.
+
+Supabase ka data existing admin tabs mein hi
+show hona chahiye.
+
+10. PENDING TESTING
+
+Ye update local syntax checks aur mock tests
+ke through check kiya gaya hai.
+
+Live Netlify deployment aur actual Supabase
+project par final testing abhi pending hai.
+
+Email notifications aur automatic email sending
+abhi implement nahi ki gayi hain.
+
+Deployment ke baad live website par reviews,
+products, media uploads, orders aur payment
+proofs ko separately test karna zaroori hai.
+
+======================================
+OBSESSKIN ADMIN SUPABASE UPDATE
+======================================
